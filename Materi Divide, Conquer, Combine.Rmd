@@ -1,0 +1,207 @@
+---
+title: "Makalah Materi Algorithma dan Pemrograman"
+author: "Kelompok 10"
+date: "2025-12-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Divide, Conquer, Combine
+
+## 1. Divide
+
+Divide adalah suatu metode sistematis yang dirancang untuk memecah masalah menjadi sub-masalah yang lebih kecil
+dan lebih mudah dipecahkan
+
+### a. Branching Factor
+
+Branching factor adalah jumlah sub-bagian yang dihasilkan saat memecah masalah menjadi bagian-bagian
+yang lebih kecil pada langkah Divide.
+Semakin banyak bagian yang dihasilkan pada setiap langkah, semakin tinggi Branching Factor-nya.
+
+##### Studi kasus :
+Misal diberikan sebuah data :
+```{r}
+data <- c(5, 3, 7, 1, 9, 4)
+```
+
+dari data tersebut kita ingin membaginya menjadi 3 bagian menggunakan Branching Factor = 3, artinya setiap pembagian menghasilkan tiga sub-bagian:
+```{r}
+branching_factor_3 <- function(x){
+  n <- length(x)
+  size <- ceiling(n/3)
+  list(
+    I1 = x[1:size],
+    I2 = x[(size+1):(2*size)],
+    I3 = x[(2*size+1):n]
+  )
+}
+
+branching_factor_3(data)
+```
+
+### b. Balance
+
+Balance berarti memecah masalah menjadi bagian-bagian yang seimbang (dalam hal jumlah elemen atau kompleksitasnya) pada langkah Divide.
+Pembagian yang seimbang membantu memastikan bahwa proses di setiap sub-bagian memiliki beban yang merata, sehingga meningkatkan efisiensi.
+Ketika array ganjil dibagi secara balance, perbedaan jumlah elemen antara bagian-bagian yang dihasilkan tidak boleh lebih dari 1 elemen.
+
+##### Studi kasus :
+Misal kita memiliki sebuah data tinggi badan (dalam cm) dari beberapa mahasiswa :
+```{r}
+tinggi <- c(165, 170, 160, 172, 168, 174, 169)
+```
+
+Pada data ini terdiri dari 7 elemen (ganjil), sehingga pembagian yang Balance berarti kedua bagian berbeda paling banyak 1 elemen, yaitu :
+```{r}
+divide_balance <- function(x){
+  n <- length(x)
+  mid <- ceiling(n / 2)   # untuk memastikan selisih yang di dapat maksimal hanya 1 elemen
+  list(
+    left = x[1:mid],
+    right = x[(mid+1):n]
+  )
+}
+
+divide_balance(tinggi)
+```
+
+### c. Data Dependence of Divide Function
+Pada konsep ini, cara membagi masalah (pada langkah Divide) bergantung pada nilai-nilai data yang ada.
+Artinya, pembagian tidak hanya didasarkan pada jumlah elemen, tetapi juga bergantung pada nilai atau sifat data tersebut.
+
+### Studi kasus :
+Misalkan sebuah dosen memiliki data nilai kuis mahasiswa :
+```{r}
+nilai <- c(45, 60, 55, 80, 70, 90, 50)
+```
+
+Dosen ingin mencari apakah nilai 70 terdapat di dalam data.
+Untuk membagi data, dosen menggunakan Data Dependence of Divide Function, yaitu :
+
+1. Pertama, data harus diurutkan terlebih dahulu(syarat untuk Binary Search).
+```{r}
+urutkan_data <- function(x){
+  sorted_data <- sort(x)
+  return(sorted_data)
+}
+
+data_urut <- urutkan_data(nilai)
+data_urut
+```
+
+2. Lalu, pembagian dilakukan berdasarkan nilai tengah, bukan banyaknya elemen.
+```{r}
+divide_data_dependence <- function(x, target){
+  x_sorted <- sort(x)
+  mid_idx <- ceiling(length(x_sorted) / 2)
+  pivot <- x_sorted[mid_idx]
+  
+  list(
+    middle_value = pivot,
+    left_part  = x_sorted[x_sorted < pivot],
+    right_part = x_sorted[x_sorted > pivot],
+    target = target
+  )
+}
+
+divide_data_dependence(nilai, 70)
+```
+
+## 2. Conquer
+Conquer adalah menyelesaikan setiap sub-masalah secara terpisah ( secara langsung jika sudah berukuran kecil atau secara rekursif jika masih berukuran besar).
+Pemecahan ini dapat dilakukan dengan menggunakan algoritma yang sama atau dengan algoritma yang berbeda, tergantung pada masalah yang dihadapi.
+
+### a. Control Parallelism
+Control Parallelism adalah teknik yang memproses setiap sub-masalah secara bersamaan (paralel) setelah langkah Divide.
+Tujuannya adalah meningkatkan kecepatan pemrosesan dengan memanfaatkan sumber daya komputasi secara bersamaan.
+
+#### Studi kasus :
+Misalkan terdapat data jumlah barang terjual dalam satu hari :
+
+```{r}
+penjualan <- c(3, 5, 2, 7, 1, 4, 6, 8)
+```
+
+Kita ingin menghitung total penjualan dengan:
+
+1. Membagi data menjadi beberapa bagian
+Kita membagi data menjadi 3 bagian sama besar agar cocok diproses paralel.
+```{r}
+divide_three <- function(x){
+  n <- length(x)
+  size <- ceiling(n / 3)
+  list(
+    bagian_1 = x[1:size],
+    bagian_2 = x[(size+1):(2*size)],
+    bagian_3 = x[(2*size+1):n]
+  )
+}
+
+bagian <- divide_three(penjualan)
+bagian
+```
+
+2. Menghitung setiap bagian secara paralel
+Dalam R, kita dapat menggunakan parLapply untuk memproses setiap bagian secara bersamaan.
+```{r}
+library(parallel)
+
+# Membuat cluster dengan 3 core
+cl <- makeCluster(3)
+
+# Menjalankan sum di setiap bagian secara paralel
+hasil_paralel <- parLapply(cl, bagian, sum)
+
+# Menutup cluster setelah selesai
+stopCluster(cl)
+
+hasil_paralel
+```
+
+
+3. Menggabungkan hasil akhirnya
+Menggabungkan total dari ketiga bagian:
+```{r}
+total_penjualan <- Reduce(`+`, hasil_paralel)
+total_penjualan
+```
+
+### b. Sequentially
+Sequentially adalah pendekatan yang memproses bagian-bagian dari masalah secara berurutan, satu persatu, setelah dibagi
+
+#### Studi kasus :
+Misalkan data penjualan harian sebagai berikut :
+
+```{r}
+penjualan <- c(3, 5, 2, 7, 1, 4, 6, 8)
+```
+
+1. dibagi menjadi beberapa bagian terlebih dahulu
+```{r}
+parts <- list(
+  c(3, 5),          # Bagian 1
+  c(2, 7),          # Bagian 2
+  c(1, 4, 6, 8)     # Bagian 3
+)
+```
+
+2. Tahap Sequentially (Diproses Berurutan)
+Berbeda dengan paralel,pada tahap ini setiap bagian dihitung satu per satu menggunakan lapply.
+```{r}
+hasil_sequential <- lapply(parts, sum)
+hasil_sequential
+```
+
+3. Menggabungkan hasil
+```{r}
+total_penjualan <- Reduce(`+`, hasil_sequential)
+total_penjualan
+```
+
+### 3. Combine
+Menggabungkan solusi dari sub-masalah untuk mendapatkan solusi dari masalah awal.
+Tujuannya untuk Menyatukan hasil kecil dari sub-masalah yang telah diselesaikan agar membentuk jawaban akhir.

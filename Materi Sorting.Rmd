@@ -1,0 +1,300 @@
+---
+title: "Mini Project Alpro"
+author: "Kelompok 10"
+date: '2025-12-09'
+output: html_document
+---
+
+# Metode Sorting
+
+Sorting (pengurutan) adalah proses mengatur atau menyusun elemen-elemen data yang sebelumnya acak menjadi urutan yang teratur (ascending (kecil ke besar) dan descending (besar ke kecil)) berdasarkan kriteria tertentu (angka, abjad, dll).
+
+## 1. Comparison Sort
+
+mengurutkan data dengan cara membandingkan elemen-elemen data satu sama lain untuk menentukan urutan yang benar.
+
+### a. Bubble Sort
+
+Bekerja dengan cara berulang kali membandingkan elemen-elemen yang bersebelahan dan menukarnya jika urutannya salah, hingga seluruh daftar data terurut, seperti gelembung yang naik ke permukaan.
+
+#### Contoh kasus :
+
+Diberikan data (5, 3, 8, 1, 2). Urutkan dari yang terkecil!
+
+```{r}
+# Buat fungsi      
+  bubble_sort <- function(x) {
+  n <- length(x)
+  for (i in 1:(n-1)) {
+    for (j in 1:(n-i)) {
+      if (x[j] > x[j+1]) {
+        temp <- x[j]
+        x[j] <- x[j+1]
+        x[j+1] <- temp
+          }
+        }
+      }
+      return(x)
+    }
+
+# Masukkan data
+  data <- c(5, 3, 8, 1, 2)
+  bubble_sort(data)
+```
+
+### b. Selection Sort
+
+Bekerja dengan cara mencari nilai terkecil kemudian menempatkannya di posisi awal, lalu mengulang ke posisi berikutnya.
+
+#### Contoh kasus :
+
+Diberikan data (29, 10, 14, 37, 13). Urutkan dari yang terkecil!
+
+```{r}
+
+# Buat fungsi
+  selection_sort <- function(x) {
+  n <- length(x)
+  for (i in 1:(n-1)) {
+    min_index <- i
+    for (j in (i+1):n) {
+      if (x[j] < x[min_index]) {
+        min_index <- j
+       }
+      }
+    # tukar elemen
+    temp <- x[i]
+    x[i] <- x[min_index]
+    x[min_index] <- temp
+    }
+  return(x)
+  }
+
+# Masukkan data
+data <- c(29, 10, 14, 37, 13)
+selection_sort(data)
+```
+
+### c. Insertion Sort
+
+Bekerja dengan cara: 1. Mengambil elemen satu per satu,
+
+2.  Menyisipkannya ke posisi yang tepat di bagian data yang sudah terurut.
+
+#### Contoh kasus :
+
+Diberikan data (12, 11, 13, 5, 6). Urutkan dari yang terkecil!
+
+```{r}
+# Buat fungsi
+  insertion_sort <- function(x) {
+  n <- length(x)
+  for (i in 2:n) {
+    key <- x[i]
+    j <- i - 1
+    
+    # geser elemen yang lebih besar ke kanan
+    while (j > 0 && x[j] > key) {
+      x[j + 1] <- x[j]
+      j <- j - 1
+    }
+    
+    # tempatkan key di posisi yang benar
+    x[j + 1] <- key
+  }
+  return(x)
+}
+
+# Masukkan data
+  data <- c(12, 11, 13, 5, 6)
+  insertion_sort(data)
+```
+
+### d. Merge Sort
+
+Bekerja dengan menggunakan strategi divide and conquer:
+
+1.  Membagi array menjadi dua bagian,
+
+2.  Mengurutkan masing-masing bagian secara rekursif,
+
+3.  Menggabungkan (merge) dua bagian yang sudah terurut.
+
+#### Contoh kasus :
+
+Diberikan data (38, 27, 43, 3, 9, 82, 10). Urutkan dari yang terkecil!
+
+```{r}
+#Buat FUngsi
+  merge_sort <- function(x) {
+  if (length(x) <= 1) {
+    return(x)
+    }
+  
+  mid <- floor(length(x) / 2)
+  
+  left <- merge_sort(x[1:mid])
+  right <- merge_sort(x[(mid + 1):length(x)])
+  
+  return(merge(left, right))
+  }
+
+  merge <- function(left, right) {
+  result <- c()
+  i <- 1
+  j <- 1
+  
+  while (i <= length(left) && j <= length(right)) {
+    if (left[i] <= right[j]) {
+      result <- c(result, left[i])
+      i <- i + 1
+      } else {
+        result <- c(result, right[j])
+        j <- j + 1
+      }
+  }
+  
+  # masukkan sisa elemen
+  if (i <= length(left)) {
+    result <- c(result, left[i:length(left)])
+  }
+  if (j <= length(right)) {
+    result <- c(result, right[j:length(right)])
+  }
+  
+  return(result)
+  }
+
+# Masukkan data
+data <- c(38, 27, 43, 3, 9, 82, 10)
+merge_sort(data)
+```
+
+### e. Quick Sort
+
+Quick sort adalah algoritma pengurutan cepat yang bekerja dengan strategi divide and conquer, yaitu:
+
+1.  Memilih pivot
+
+2.Membagi elemen menjadi:
+
+-   elemen \< pivot
+
+-   elemen == pivot
+
+-   elemen \> pivot
+
+3.  Mengurutkan bagian kiri dan kanan secara rekursif
+
+#### Contoh kasus :
+
+Diberikan data (10, 7, 8, 9, 1, 5). Urutkan dari yang terkecil!
+
+```{r}
+#Buat fungsi
+quick_sort <- function(x) {
+  if (length(x) <= 1) {
+    return(x)
+  } else {
+    pivot <- x[1]
+    
+    left <- x[x < pivot]
+    middle <- x[x == pivot]
+    right <- x[x > pivot]
+    
+    return(c(quick_sort(left), middle, quick_sort(right)))
+  }
+}
+
+# Masukkan data
+data <- c(10, 7, 8, 9, 1, 5)
+quick_sort(data)
+```
+
+## 2. Non-comparison Sort
+
+Non-comparison sort adalah pengurutan yang tidak membandingkan elemen satu sama lain, melainkan menggunakan teknik perhitungan, pembagian bucket, atau manipulasi digit.
+
+### a. Counting Sort
+
+Counting sort bekerja dengan menghitung jumlah kemunculan setiap nilai.
+
+#### Contoh kasus :
+
+Diberikan data (4, 2, 2, 8, 3, 3, 1) Urutkan dari yang terkecil!
+
+```{r}
+counting_sort <- function(x) {
+  max_val <- max(x)
+  min_val <- min(x)
+
+  count <- integer(max_val - min_val + 1)
+
+  # hitung frekuensi setiap angka
+  for (value in x) {
+    count[value - min_val + 1] <- count[value - min_val + 1] + 1
+  }
+
+  # bangun hasil
+  sorted <- c()
+  for (i in seq_along(count)) {
+    sorted <- c(sorted, rep(i + min_val - 1, count[i]))
+  }
+
+  return(sorted)
+}
+
+data <- c(4, 2, 2, 8, 3, 3, 1)
+counting_sort(data)
+```
+
+### b. Radix Sort (Non-Comparison Sort)
+
+Radix sort bekerja dengan mengurutkan angka berdasarkan digit per digit (satuan → puluhan → ratusan).
+
+#### Contoh kasus :
+
+Diberikan data (170, 45, 75, 90, 802, 24, 2, 66). Urutkan dari yang terkecil!
+
+```{r}
+# Fungsi counting sort untuk digit tertentu
+count_sort_digit <- function(x, digit_place) {
+  count <- integer(10)
+  output <- integer(length(x))
+
+  # hitung frekuensi digit
+  for (num in x) {
+    digit <- (num %/% digit_place) %% 10
+    count[digit + 1] <- count[digit + 1] + 1
+  }
+
+  # akumulasi
+  for (i in 2:10) {
+    count[i] <- count[i] + count[i - 1]
+  }
+
+  # bangun output
+  for (i in length(x):1) {
+    digit <- (x[i] %/% digit_place) %% 10
+    output[count[digit + 1]] <- x[i]
+    count[digit + 1] <- count[digit + 1] - 1
+  }
+
+  return(output)
+}
+
+# Radix Sort
+radix_sort <- function(x) {
+  max_val <- max(x)
+  digit_place <- 1
+  
+  while (max_val %/% digit_place > 0) {
+    x <- count_sort_digit(x, digit_place)
+    digit_place <- digit_place * 10
+  }
+  return(x)
+}
+
+data <- c(170, 45, 75, 90, 802, 24, 2, 66)
+radix_sort(data)
+```

@@ -1,0 +1,207 @@
+---
+title: "Metode Searching — Penjelasan + Studi Kasus (R + RStudio)"
+author: "kelompok 10"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(microbenchmark)
+```
+
+# Metode Searching
+
+## 1. Unsorted Search
+
+### 1.1 Sequential Search (Linear Search)
+Mencari elemen dengan memeriksa setiap data secara berurutan, satu per satu, dari
+awal hingga akhir
+
+```{r sequential-function}
+sequential_search <- function(vec, target){
+  for(i in seq_along(vec)){
+    if(vec[i] == target) return(list(found = TRUE, index = i, steps = i))
+  }
+  return(list(found = FALSE, index = NA, steps = length(vec)))
+}
+
+# contoh
+v <- c(7,5,1,9,3)
+sequential_search(v, 1)
+```
+
+### Studi Kasus 1: eksperimen waktu rata-rata
+
+```{r sequential-benchmark}
+set.seed(123)
+vec <- sample(1:1e5, 1e4)
+mb <- microbenchmark(
+  found = sequential_search(vec, vec[9000]),
+  not_found = sequential_search(vec, -1),
+  times = 100
+)
+print(mb)
+```
+
+### 1.2 Hash Table Search (dengan chaining)
+Menggunakan fungsi hash untuk menghitung indeks (posisi) data secara langsung,
+memungkinkan pencarian instan tanpa perbandingan.
+
+```{r hash-table-impl}
+create_hash_table <- function(vec, m = 101){
+  buckets <- vector('list', m)
+  for(x in vec){
+    h <- (x %% m) + 1
+    buckets[[h]] <- c(buckets[[h]], x)
+  }
+  structure(list(buckets = buckets, m = m), class = 'hashtable')
+}
+
+hash_search <- function(ht, target){
+  h <- (target %% ht$m) + 1
+  bucket <- ht$buckets[[h]]
+  if(length(bucket) == 0) return(list(found = FALSE, index = NA))
+  idx <- which(bucket == target)
+  if(length(idx)) return(list(found = TRUE, bucket = h, pos_in_bucket = idx))
+  list(found = FALSE, bucket = h)
+}
+
+# contoh
+ht <- create_hash_table(c(7,5,1,9,3,14), m = 5)
+hash_search(ht, 14)
+```
+
+### 1.3 Binary Search Tree (BST)
+Mencari data dengan menelusuri struktur pohon, bergerak ke cabang kiri (nilai lebih
+kecil) atau kanan (nilai lebih besar) secara rekursif.
+
+```{r bst-impl}
+make_node <- function(val) list(val = val, left = NULL, right = NULL)
+
+bst_insert <- function(root, val){
+  if(is.null(root)) return(make_node(val))
+  if(val < root$val) root$left <- bst_insert(root$left, val)
+  else root$right <- bst_insert(root$right, val)
+  root
+}
+
+bst_search <- function(root, target){
+  if(is.null(root)) return(FALSE)
+  if(root$val == target) return(TRUE)
+  if(target < root$val) bst_search(root$left, target)
+  else bst_search(root$right, target)
+}
+
+# contoh
+values <- c(8,10,3,14,6,1,7,4)
+root <- NULL
+for(v in values) root <- bst_insert(root, v)
+bst_search(root, 7)
+```
+
+## 2. Sorted Search
+
+> Catatan: metode sorted search memerlukan data terurut.
+
+### 2.1 Binary Search
+Mencari elemen pada data terurut dengan membandingkan target ke nilai tengah, lalu
+membuang setengah bagian pencarian secara berulang.
+
+```{r binary-search}
+binary_search <- function(vec, target){
+  L <- 1; R <- length(vec)
+  steps <- 0
+  while(L <= R){
+    steps <- steps + 1
+    mid <- floor((L + R) / 2)
+    if(vec[mid] == target) return(list(found = TRUE, index = mid, steps = steps))
+    if(target < vec[mid]) R <- mid - 1 else L <- mid + 1
+  }
+  list(found = FALSE, index = NA, steps = steps)
+}
+
+v <- c(1,3,5,7,9,11,13)
+binary_search(v, 3)
+```
+
+### 2.2 Interpolation Search
+Menebak posisi elemen secara cerdas (interpolasi) pada data terurut, dengan asumsi
+data terdistribusi seragam (bukan sekadar membelah di tengah).
+
+```{r interpolation-search}
+interpolation_search <- function(vec, target){
+  L <- 1; R <- length(vec); steps <- 0
+  while(L <= R && target >= vec[L] && target <= vec[R]){
+    steps <- steps + 1
+    if(L == R){
+      if(vec[L] == target) return(list(found = TRUE, index = L, steps = steps))
+      else return(list(found = FALSE, index = NA, steps = steps))
+    }
+    pos <- L + floor(((target - vec[L]) * (R - L)) / (vec[R] - vec[L]))
+    if(pos < L || pos > R) break
+    if(vec[pos] == target) return(list(found = TRUE, index = pos, steps = steps))
+    if(vec[pos] < target) L <- pos + 1 else R <- pos - 1
+  }
+  list(found = FALSE, index = NA, steps = steps)
+}
+
+v <- seq(10, 100, by = 10)
+interpolation_search(v, 90)
+```
+
+### 2.3 Jump Search
+Mencari pada data terurut dengan "melompat" maju dalam interval tetap (blok), lalu
+melakukan pencarian berurutan di dalam blok yang relevan.
+
+```{r jump-search}
+jump_search <- function(vec, target){
+  n <- length(vec)
+  step <- floor(sqrt(n))
+  prev <- 1
+  while(prev <= n && vec[min(n, prev+step-1)] < target){
+    prev <- prev + step
+  }
+  # linear search in block
+  start <- max(1, prev - step + 1)
+  for(i in start:min(n, prev+step-1)){
+    if(vec[i] == target) return(list(found = TRUE, index = i))
+  }
+  list(found = FALSE, index = NA)
+}
+
+v <- 1:31
+jump_search(v, 27)
+```
+
+## 3. Studi Kasus Lengkap: Bandingkan Waktu Pencarian
+
+Kita bandingkan waktu `sequential` vs `binary` vs `hash` pada *n* yang berbeda.
+
+```{r benchmark-compare}
+set.seed(42)
+n <- c(1e3, 5e3, 1e4)
+res <- data.frame()
+for(N in n){
+  vec <- sample(1:(N*10), N)
+  target <- sample(vec, 1)
+  vec_sorted <- sort(vec)
+  ht <- create_hash_table(vec, m = round(N/5) + 1)
+  bm <- microbenchmark(
+    sequential = sequential_search(vec, target),
+    binary = binary_search(vec_sorted, target),
+    hashtable = hash_search(ht, target),
+    times = 50
+  )
+  print(sprintf('N=%d', N))
+  print(bm)
+}
+```
+
+
+
+
+ 
+
+
+
